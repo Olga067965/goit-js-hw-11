@@ -29,6 +29,8 @@ let gallerySimpleLightbox = new SimpleLightbox('.gallery a');
 
 let pageNumber = 1;
 
+loadMoreButton.classList.add('d-none'); // Початково приховуємо кнопку
+
 searchButton.addEventListener('click', e => {
   e.preventDefault();
   clearGallery();
