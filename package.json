@@ -23,6 +23,7 @@
     "caniuse-lite": "^1.0.30001517",
     "modern-normalize": "^1.1.0",
     "notiflix": "^3.2.6",
+    "scroll-polyfill": "^1.0.1",
     "simplelightbox": "^2.14.1",
     "slim-select": "^2.6.0"
   },
