@@ -29,7 +29,7 @@ let gallerySimpleLightbox = new SimpleLightbox('.gallery a');
 
 let pageNumber = 1;
 
-loadMoreButton.classList.add('d-none'); // Початково приховуємо кнопку
+loadMoreButton.classList.add('d-none'); 
 
 searchButton.addEventListener('click', e => {
   e.preventDefault();
@@ -46,17 +46,20 @@ searchButton.addEventListener('click', e => {
         Notiflix.Notify.success(
           `Hooray! We found ${foundData.totalHits} images.`
         );
-        loadMoreButton.classList.add('d-block'); // Приховати кнопку
+        loadMoreButton.classList.add('d-block'); 
         gallerySimpleLightbox.refresh();
       }
     });
+  } else {
+    Notiflix.Notify.failure('Please enter a search query.');
+    loadMoreButton.classList.add('d-none');
   }
 });
 
 loadMoreButton.addEventListener('click', () => {
   pageNumber++;
   const trimmedValue = input.value.trim();
-  loadMoreButton.classList.remove('d-none'); // Показати кнопку
+  loadMoreButton.classList.remove('d-none'); 
   fetchImages(trimmedValue, pageNumber).then(foundData => {
     if (foundData.hits.length === 0) {
       Notiflix.Notify.failure(
@@ -67,7 +70,7 @@ loadMoreButton.addEventListener('click', () => {
       Notiflix.Notify.success(
         `Hooray! We found ${foundData.totalHits} images.`
       );
-      loadMoreButton.classList.add('d-block'); // Приховати кнопку
+      loadMoreButton.classList.add('d-block'); 
     }
   });
 });
@@ -102,5 +105,4 @@ function renderImgLst(images) {
 function clearGallery() {
   gallery.innerHTML = '';
   pageNumber = 1;
-  loadMoreButton.classList.remove('d-none'); // Показати кнопку
-}
+  loadMoreButton.classList.remove('d-none'); 
