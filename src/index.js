@@ -1,84 +1,106 @@
-import { fetchBreeds, fetchCatByBreed } from './cat-api.js';
+import axios from 'axios';
+import Notiflix from 'notiflix';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 
-const breedSelect = document.querySelector('.breed-select');
-const catInfo = document.querySelector('.cat-info');
-const loader = document.querySelector('.loader');
-const error = document.querySelector('.error');
-
-function toggleElement(e, s) {
-  e.style.display = s ? 'block' : 'none';
-}
-
-function initialPage() {
-  toggleElement(breedSelect, false);
-  toggleElement(loader, true);
-  fetchBreeds()
-    .then(breeds => {
-      breeds.forEach(breed => {
-        const option = document.createElement('option');
-        option.value = breed.id;
-        option.textContent = breed.name;
-        breedSelect.appendChild(option);
-      });
-
-      toggleElement(loader, false);
-      toggleElement(breedSelect, true);
+export const fetchImages = async (inputValue, pageNumber) => {
+  return await fetch(
+    `https://pixabay.com/api/?key=38684202-1b965ae9aa77d23174a7bb28f&q=${inputValue}&orientation=horizontal&safesearch=true&image_type=photo&per_page=40&page=${pageNumber}`
+  )
+    .then(async res => {
+      if (!res.ok) {
+        if (res.status === 404) {
+          return [];
+        }
+        throw new Error(res.status);
+      }
+      return await res.json();
     })
     .catch(error => {
-      showError(
-        'Meow! 🐾 Please try again later. Thank you for your patience!😺'
-      );
-      toggleElement(loader, false);
+      console.error(error);
     });
-}
+};
 
-breedSelect.addEventListener('change', () => {
-  catInfo.innerHTML = '';
-  clearError();
-  const selectedBreedId = breedSelect.value;
-  toggleElement(loader, true);
+const input = document.querySelector('.search-form-input');
+const searchButton = document.querySelector('.search-form-button');
+const gallery = document.querySelector('.gallery');
+const loadMoreButton = document.querySelector('.load-more');
+let gallerySimpleLightbox = new SimpleLightbox('.gallery a');
 
-  fetchCatByBreed(selectedBreedId)
-    .then(cat => {
-      const image = document.createElement('img');
-      image.src = cat.url;
+loadMoreButton.style.display = 'none';
 
-      const catName = document.createElement('p');
-      catName.innerHTML = `<strong>Breed:</strong> ${cat.breeds[0].name}`;
+let pageNumber = 1;
 
-      const catDescription = document.createElement('p');
-      catDescription.innerHTML = `<strong>Description:</strong> ${cat.breeds[0].description}`;
+searchButton.addEventListener('click', e => {
+  e.preventDefault();
+  clearGallery();
+  const trimmedValue = input.value.trim();
+  if (trimmedValue !== '') {
+    fetchImages(trimmedValue, pageNumber).then(foundData => {
+      if (foundData.hits.length === 0) {
+        Notiflix.Notify.failure(
+          'Sorry, there are no images matching your search query. Please try again.'
+        );
+      } else {
+        renderImgLst(foundData.hits);
+        Notiflix.Notify.success(
+          `Hooray! We found ${foundData.totalHits} images.`
+        );
+        loadMoreButton.style.display = 'block';
+        gallerySimpleLightbox.refresh();
+      }
+    });
+  }
+});
 
-      const catTemperament = document.createElement('p');
-      catTemperament.innerHTML = `<strong>Temperament:</strong> ${cat.breeds[0].temperament}`;
+loadMoreButton.addEventListener('click', () => {
+  pageNumber++;
+  const trimmedValue = input.value.trim();
+  loadMoreButton.style.display = 'none';
+  fetchImages(trimmedValue, pageNumber).then(foundData => {
+    if (foundData.hits.length === 0) {
+      Notiflix.Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    } else {
+      renderImgLst(foundData.hits);
+      Notiflix.Notify.success(
+        `Hooray! We found ${foundData.totalHits} images.`
+      );
+      loadMoreButton.style.display = 'block';
+    }
+  });
+});
 
-      catInfo.appendChild(image);
-      catInfo.appendChild(catName);
-      catInfo.appendChild(catDescription);
-      catInfo.appendChild(catTemperament);
-
-      toggleElement(loader, false);
+function renderImgLst(images) {
+  console.log(images, 'images');
+  const markup = images
+    .map(image => {
+      console.log('img', image);
+      return `<div class="photo-card">
+       <a href="${image.largeImageURL}"><img class="photo" src="${image.webformatURL}" alt="${image.tags}" title="${image.tags}" loading="lazy"/></a>
+        <div class="info">
+           <p class="info-item">
+    <b>Likes</b> <span> ${image.likes} </span>
+</p>
+            <p class="info-item">
+                <b>Views</b> <span>${image.views}</span>  
+            </p>
+            <p class="info-item">
+                <b>Comments</b> <span>${image.comments}</span>  
+            </p>
+            <p class="info-item">
+                <b>Downloads</b> <span>${image.downloads}</span> 
+            </p>
+        </div>
+    </div>`;
     })
-    .catch(error => {
-      showError(
-        'Meow! 🐾 Something went wrong with our cat-nection! Please try again later. Thank you for your patience!😺'
-      );
-      toggleElement(loader, false);
-    });
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const error = document.querySelector('.error');
-  error.style.display = 'none';
-});
-
-function showError(message) {
-  error.textContent = message;
-  error.style.display = 'block';
+    .join('');
+  gallery.innerHTML += markup;
 }
 
-function clearError() {
-  error.style.display = 'none';
+function clearGallery() {
+  gallery.innerHTML = '';
+  pageNumber = 1;
+  loadMoreButton.style.display = 'none';
 }
-
-initialPage();
